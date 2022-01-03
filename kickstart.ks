@@ -1,50 +1,39 @@
+eula --agree
 
-#version=DEVEL
-# System authorization information
-auth --enableshadow --passalgo=sha512
-# Use CDROM installation media
-cdrom
-# Use text install
 text
-# Run the Setup Agent on first boot
-firstboot --enable
-ignoredisk --only-use=sda
-# Keyboard layouts
-keyboard --vckeymap=us --xlayouts='us','it'
-# System language
-lang en_US.UTF-8
+cdrom
+skipx
 
-# Network information
-network  --bootproto=dhcp --device=enp0s3 --ipv6=auto --activate
-network  --hostname=pannacotta
+keyboard --vckeymap=us --xlayouts='us'
+lang en-US.UTF-8
+timezone Europe/Rome --isUtc --ntpservers=0.it.pool.ntp.org,1.it.pool.ntp.org,2.it.pool.ntp.org,3.it.pool.ntp.org
 
-# Root password
+network --bootproto=dhcp --ipv6=auto --hostname=pannacotta.local # --activate # --onboot=yes
+firewall --enable --ssh
+selinux --enforcing
+
+auth --enableshadow --passalgo=sha512
 rootpw --iscrypted $6$Qls43AfQOShsQMjd$Nvl4qvN7dQx0pJ2I85HqXgH8EssAM.n12U/vVMHpTeNDeQaXp1rRCMXlz5MaLMuidl7KH8F44uTibgOghJ2zc0
-# System services
-services --enabled="chronyd"
-# System timezone
-timezone Europe/Rome --isUtc --ntpservers=0.centos.pool.ntp.org,1.centos.pool.ntp.org,2.centos.pool.ntp.org,3.centos.pool.ntp.org
-user --name=dietpi --password=$6$LyYO7Q85Drdu5HRQ$jVjqVTfdMq/BST2tKFsyI/oo/Fgsa/kEZmvCd63qB0a0WDWlhMa6F/O1Rikcn1aEjEuHvOGHiP.FVgjHkfhX5/ --iscrypted --gecos="Foo Bar"
-# System bootloader configuration
-bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=sda
+user --name=foobar --password=$6$LyYO7Q85Drdu5HRQ$jVjqVTfdMq/BST2tKFsyI/oo/Fgsa/kEZmvCd63qB0a0WDWlhMa6F/O1Rikcn1aEjEuHvOGHiP.FVgjHkfhX5/ --iscrypted --gecos="Foo Bar" --groups=wheel
+
+ignoredisk --only-use=sda
+zerombr
+#bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=sda
+bootloader --location=mbr --boot-drive=sda
+clearpart --all --drives=sda --initlabel
 autopart --type=lvm
-# Partition clearing information
-clearpart --none --initlabel
+
+services --enabled="chronyd"
+
+reboot --eject
 
 %packages
 @^minimal
-@core
-chrony
-kexec-tools
-
 %end
 
 %addon com_redhat_kdump --enable --reserve-mb='auto'
-
 %end
 
-%anaconda
-pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
-pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
-pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%post --interpreter=/usr/bin/bash --erroronfail --log=/var/log/kickstart-post.log
+systemctl enable tmp.mount
 %end
